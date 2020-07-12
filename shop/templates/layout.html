@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/fashionspot.css')}}">
+    <link rel="icon" href="{{url_for('static',filename='images/logo_icon.png')}}" type="image/icon type">
+
+    {% if title %}
+    <title>{{title}}</title>
+    {% else %}
+    <title>The Fashion Spot</title>
+    {% endif %}
+  </head>
+  <body>
+    {% block content %}
+
+    {% endblock content %}
+    <!--<script src="{{url_for('static', filename='js/jquery-3.4.1.slim.min.js')}}" ></script>-->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> 
+
+    <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    
+    </body>
+</html>

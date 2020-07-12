@@ -1,0 +1,296 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{url_for('admin')}}">Admin</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+          <ul class="navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="{{url_for('admin')}}">Product <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('brands')}}">Brand</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('categories')}}">Category</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('sub')}}">Subcategories</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('specs')}}">Specifications</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Add products
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                <a class="dropdown-item" href="{{url_for('addproduct')}}">Add product</a>
+                <a class="dropdown-item" href="{{url_for('addbrand')}}">Add brand</a>
+                <a class="dropdown-item" href="{{url_for('addcat')}}">Add category</a>
+                <a class="dropdown-item" href="{{url_for('addsub')}}">Add subcategory</a>
+                <a class="dropdown-item" href="{{url_for('addspecs')}}">Add specifications</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+</div>
+
+<!--==========END NAVBAR ==============-->
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-1"></div>
+            <div class="col-md-10">
+                <div class="text-center bg-info p-2 h4">Add a product</div>
+                {% from "_formhelpers.html" import render_field %}
+                <form method="post" enctype="multipart/form-data">
+                <div>
+                    {{ render_field(form.name, class="form-control") }}
+                    {{ render_field(form.price, class="form-control") }}
+                    {{ render_field(form.discount, class="form-control") }}
+                    {{ render_field(form.stock, class="form-control") }}
+                    <label for="brand">Add a brand</label>
+                    <select name="brand" id="brand" class="form-control" required>
+                        {% if getproduct %}
+                        <option value="{{getproduct.brand_id}}" style="display: none;">{{getproduct.brand.name}}</option>
+                        {% for brand in brands %}
+                        <option value="{{brand.id}}">{{brand.name}}</option>
+                        {% endfor %}
+                       {% else %}
+                     <option value=""> Select A brand</option>
+                     {% for brand in brands %}
+                     <option value="{{brand.id}}">{{brand.name}}</option>
+                     {% endfor %}
+                     {% endif %}
+                    </select>
+                    <label for="category">Add a category</label>
+                    <select name="category" id="category" class="form-control" required>
+                    {% if getproduct %}
+                        
+                      <option value="{{getproduct.category_id}}" style="display: none;">{{getproduct.category.name}}</option>
+                      {% for category in categories %}
+                      <option value="{{category.id}}">{{category.name}}</option>
+                      {% endfor %}
+                     {% else %}
+                     <option value=""> Select A category</option>
+                     {% for category in categories %}
+                     <option value="{{category.id}}">{{category.name}}</option>
+                     {% endfor %}
+                     {% endif %}
+                    </select>
+
+  
+                     <label id='subLabel' for="sub">Add a Subcategory</label></br>
+                    <select name="sub" id="sub" class="form-control" required>
+                      {% if getproduct %}
+                      <option value="{{getproduct.subcategory_id}}" style="display: none;">{{getproduct.subcategory.name}}</option>
+                      
+                      {% for sub in subcategories.query.filter_by(category_id=getproduct.category.id).all() %}
+                      <option value="{{sub.id}}" >{{sub.name}}</option>
+                      {% endfor %}
+                      {% else %}
+                      <option value=""> Select a Subcategory</option>
+                      {% endif %}
+                     </select>
+
+
+                     
+                      {% if getproduct %}
+                      <label id='specLabel' for="specs">Add a Specification</label></br>
+                      {% set spec_val=[] %}
+                      {% for i in Specsvalues.query.filter_by(product_id=getproduct.id).all() %}
+                      {{ spec_val.append(i.spec_id) }}
+                      {% endfor %}
+                      <label id="spec_select" class="form-control" ></label>
+                      <select name="specs" id="specs" class="form-control" multiple required>
+                      {% for spec in Specs.query.filter_by(category_id=getproduct.category_id).all() %}
+                      {% if spec.id in spec_val %}
+                      <option value="{{spec.id}}" selected>{{spec.name}}</option>
+                      {% else %}
+                      <option value="{{spec.id}}">{{spec.name}}</option>
+                      {% endif %}
+                      {% endfor %}
+                      {% else %}
+                      <label id='specLabel' for="specs">Add a Specification</label></br>
+                      <label id="spec_select" class="form-control" >None Selected</label>
+                      <select name="specs" id="specs" class="form-control" multiple required>
+                      {% endif %}
+                     </select>
+
+
+                    {{ render_field(form.colors, class="form-control") }}
+                    {{ render_field(form.description, class="form-control", rows="10") }}
+                </div>
+                <div class="container">
+                    <div class="row">
+                        {% if getproduct %}
+                        <div class="col-md-4"> <input type="file" name="image_1" id="image_1">
+                            <a href="{{url_for('static',filename='images/' + getproduct.image_1)}}"> images/{{ getproduct.image_1}}</a>
+                        </div>
+                        <div class="col-md-4"><input type="file" name="image_2" id="image_2"> 
+                            <a href="{{url_for('static',filename='images/' + getproduct.image_2)}}">images/{{ getproduct.image_2}}</a>
+                        </div>
+                        
+                        <div class="col-md-4"><input type="file" name="image_3" id="image_3"> 
+                            <a href="{{url_for('static',filename='images/' + getproduct.image_3)}}"> image/{{ getproduct.image_3}}</a>
+                        </div>
+                      
+                        {% else %}
+                        <div class="col-md-4">{{ render_field(form.image_1) }}</div>
+                        <div class="col-md-4">{{ render_field(form.image_2) }}</div>
+                        <div class="col-md-4">{{ render_field(form.image_3) }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p><input type="submit" value="{% if getproduct %}Update {% else %}Add{% endif %} product" class="btn-outline-info">
+                </form>
+            </div>
+      <div class="col-md-1"></div>
+    </div>
+</div>
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> 
+
+<script>
+   /*   
+  $("#specs").click(function () {
+    $('#specs').attr('multiple','multiple')
+    
+
+  });
+  $('#specs').change(function(){
+    v=$('#specs option:selected').toArray().map(item => item.text).join();
+    $('#spec_select').html(v);
+    $('#spec_select').show();
+    console.log('v:'+v);
+  });
+  $("#category").change(function () {
+      console.log('changed')
+      var categoryId = $(this).val();  // get the selected country ID from the HTML input
+      console.log(categoryId)
+      $.ajax({                       // initialize an AJAX request
+        url: '/spec-options',                    // set the url of the request (= localhost:8000/hr/ajax/load-cities/)
+        data: {
+          'category': categoryId,       // add the country id to the GET parameters
+        },
+        success: function (data) {   // `data` is the return of the `load_cities` view function
+          console.log('success');
+          console.log(data[0]);
+          if(data){
+                $("#specs").empty();
+
+                $.each(data,function(index){
+                  console.log(data[index].name)
+                   $("#specs").append('<option value="'+data[index].id+'">'+data[index].name+'</option>');
+                });
+                
+            }else{
+               $("#specs").empty();
+            }
+
+        }
+      });
+
+    });
+
+    */
+  /*
+  $("#specs").click(function () {
+  $('#specs').attr('multiple','multiple')
+    
+
+  });
+  $('#specs').change(function(){
+    v=$('#specs option:selected').toArray().map(item => item.text).join();
+    $('#spec_select').html(v);
+    $('#spec_select').show();
+    console.log('v:'+v);
+  });
+  $("#category").change(function () {
+      console.log('changed')
+      var categoryId = $(this).val();  // get the selected country ID from the HTML input
+      console.log(categoryId)
+      $.ajax({                       // initialize an AJAX request
+        url: '/sub-options',                    // set the url of the request (= localhost:8000/hr/ajax/load-cities/)
+        data: {
+          'category': categoryId,       // add the country id to the GET parameters
+        },
+        success: function (data) {   // `data` is the return of the `load_cities` view function
+          console.log('success');
+          if(data){
+                $("#specs").empty();
+                /*$("#specs").append('<option disabled id="spec_placeholder" value="" selected>Select Specifications</option>');
+                console.log(data.spec_list)
+                var spec_list=data.spec_list;
+                var sub_list=data.sub_list;
+                $.each(spec_list,function(index){  
+                  console.log(spec_list[index].name)
+                   $("#specs").append('<option value="'+spec_list[index].id+'">'+spec_list[index].name+'</option>');
+                });
+
+                $.each(sub_list,function(index){  
+                  console.log(sub_list[index].name)
+                   $("#sub").append('<option value="'+sub_list[index].id+'">'+sub_list[index].name+'</option>');
+                });
+                
+            }else{
+               $("#specs").empty();
+            }
+
+        }
+      });
+
+    });
+
+*/
+$(document).ready(function(){
+  v=$('#specs option:selected').toArray().map(item => item.text).join();
+    $('#spec_select').html(v);
+    $('#spec_select').show(); 
+});
+
+$('#specs').change(function(){
+    v=$('#specs option:selected').toArray().map(item => item.text).join();
+    $('#spec_select').html(v);
+    $('#spec_select').show();
+    console.log('v:'+v);
+  });
+$('#category').change(function(){
+  var categoryId = $(this).val();
+  $.ajax({                       // initialize an AJAX request
+        url: '/sub-options',                    // set the url of the request (= localhost:8000/hr/ajax/load-cities/)
+        data: {
+          'category': categoryId,       // add the country id to the GET parameters
+        },
+        success: function (data) { 
+          if(data){
+                $("#sub").empty();
+                $("#specs").empty();
+
+                var sub_list=data.sub_list;
+                console.log(sub_list);
+                var spec_list=data.spec_list;
+                $('#sub').append('<option value=""> Select a Subcategory</option>');
+                $.each(sub_list,function(index){  
+                  console.log(sub_list[index].name)
+                   $("#sub").append('<option value="'+sub_list[index].id+'">'+sub_list[index].name+'</option>');
+                });
+                $.each(spec_list,function(index){  
+                  console.log(spec_list[index].name)
+                   $("#specs").append('<option value="'+spec_list[index].id+'">'+spec_list[index].name+'</option>');
+                });
+          }
+          
+        }
+  });                    
+});
+
+
+</script>
+
+{% endblock content %}
