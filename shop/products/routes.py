@@ -22,7 +22,8 @@ def home():
     top_products=[]
     top_brands=[]
     top_categories=[]
-    if 'logged_in' in session:
+    
+    if 'logged_in' in session and len(most_viewed(session['uid'])[0])>0:
         recommended_items=[]
         for i in recommended_items_by_itemviewed(most_viewed(session['uid'])[0]):
             recommended_items.append(Addproduct.query.get_or_404(i))
@@ -36,7 +37,6 @@ def home():
     for i in hot_categories:
         top_categories.append(Subcategories.query.get_or_404(i))
     lengths=(len(top_products),len(top_categories),len(top_brands))
-    print(top_products,top_brands,top_categories)
     return render_template('products/home.html',brands=brands(),categories=categories(),Subcategories=Subcategories,Category=Category,top_products=top_products,top_brands=top_brands,top_categories=top_categories,lengths=lengths,recommended_items=recommended_items)
 
 @app.route('/products')
@@ -49,8 +49,6 @@ def products():
 def result():
     searchword = request.args.get('q')
     products_id=search_query(searchword)
-    print(Addproduct.query.get_or_404(5))
-    print(products_id)
     rec=[]
     for p in products_id:
         rec.append(Addproduct.query.get_or_404(int(p)))
@@ -65,9 +63,7 @@ def single_page(id):
     for s in spec_values:
         spec=Specs.query.get_or_404(s.spec_id).name
         specs.append(spec)
-    print(specs)
     recommendations=content_based_filtering(id).index
-    print(recommendations)
     rec=[]
     for p in recommendations:
         if p!=id:
@@ -76,7 +72,6 @@ def single_page(id):
     
     if 'logged_in' in session:
         event=Events(customer_id=session['uid'],event='view',product_id=product.id)
-        print('view : ',product,session['uid'],session['s_name'])
         db.session.add(event)
         db.session.commit()
     return render_template('products/single_page.html',product=product,brands=brands(),categories=categories(),specs=specs,Subcategories=Subcategories,x=rec)
@@ -148,7 +143,6 @@ def deletebrand(id):
             for sp in spec_values:
                 db.session.delete(sp)
             db.session.commit()
-            print(p)
             db.session.delete(p)
         db.session.commit()
         db.session.delete(brand)
@@ -200,10 +194,8 @@ def deletecat(id):
                 db.session.delete(e)
         specs=Specs.query.filter_by(category_id=id).all()
         for s in specs:
-            print(s)
             spec_values=Specsvalues.query.filter_by(spec_id=s.id).all()
             for sp in spec_values:
-                print(sp)
                 db.session.delete(sp)
             db.session.delete(s)
             sub=Subcategories.query.filter_by(category_id=id).all()
@@ -249,7 +241,6 @@ def updatespec(id):
         return redirect(url_for('login'))
     updatespec = Specs.query.get_or_404(id)
     spec = request.form.get('specs')
-    print('spec: ',spec)  
     if request.method =="POST":
         updatespec.name = spec
         flash(f'The specification {updatespec.name} was changed to {spec}','success')
@@ -275,22 +266,6 @@ def deletespec(id):
     flash(f"The brand {spec.name} can't be  deleted from your database","warning")
     return redirect(url_for('specs'))
 
-'''
-@app.route('/spec-options')
-def spec_options():
-    print('ggvjh')
-    getcat=request.args.get('category')
-    print(getcat)
-    specs = Specs.query.filter_by(category_id=getcat).all()  
-    print(getid)
-    #print(jsonify({'specs':specs})) 
-    spec_list=[] 
-    for i in specs:    
-        spec_list.append({'id':i.id,'name':i.name})
-    return jsonify(spec_list)
-
-    #return render_template('products/addproduct.html',spec_list=spec_list)
-'''
 ################################################
 
 
@@ -317,7 +292,6 @@ def updatesub(id):
         return redirect(url_for('login'))
     updatesub = Subcategories.query.get_or_404(id)
     sub = request.form.get('sub')
-    print('sub: ',sub)  
     if request.method =="POST":
         updatesub.name = sub
         flash(f'The Subcategory {updatesub.name} was changed to {sub}','success')
@@ -330,7 +304,6 @@ def updatesub(id):
 @app.route('/deletesub/<int:id>', methods=['GET','POST'])
 def deletesub(id):
     sub = Subcategories.query.get_or_404(id)
-    print(sub.name)
     if request.method=="POST":
         db.session.delete(sub)
         flash(f"The subcategory {sub.name} was deleted from your database","success")
@@ -343,9 +316,7 @@ def deletesub(id):
 
 @app.route('/sub-options')
 def spec_options():
-    print('subcategories')
     getcat=request.args.get('category')
-    print(getcat)
     sub = Subcategories.query.filter_by(category_id=getcat).all()
     specs = Specs.query.filter_by(category_id=getcat).all()  
     spec_list=[] 
@@ -354,14 +325,12 @@ def spec_options():
     sub_list=[] 
     for i in sub:    
         sub_list.append({'id':i.id,'name':i.name})
-    print(sub_list)
     return jsonify({'sub_list':sub_list,'spec_list':spec_list})
 
 ########################################################
 
 @app.route('/addproduct', methods=['GET','POST'])
 def addproduct():
-    print('yooooooooooo')
     form = Addproducts(request.form)
     brands = Brand.query.all()
     categories = Category.query.all()
@@ -376,7 +345,6 @@ def addproduct():
         category = request.form.get('category')
         specs = request.form.getlist('specs')
         sub = request.form.get('sub')
-        print(sub)
         image_1 = photos.save(request.files.get('image_1'), name=secrets.token_hex(10) + ".")
         image_2 = photos.save(request.files.get('image_2'), name=secrets.token_hex(10) + ".")
         image_3 = photos.save(request.files.get('image_3'), name=secrets.token_hex(10) + ".")
@@ -408,12 +376,10 @@ def updateproduct(id):
     categories = Category.query.all()
     brand = request.form.get('brand')
     category = request.form.get('category')
-    print(category,brand)
     subcategories=Subcategories
     sub = request.form.get('sub')
 
     spec_values= Specsvalues.query.filter_by(product_id=id).all()
-    print(spec_values)
     specs= Specs.query.filter_by(category_id=product.category_id).all()
     
     if request.method =="POST":
